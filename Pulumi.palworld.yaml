@@ -1,0 +1,9 @@
+encryptionsalt: v1:F+VLC+QkTks=:v1:Ip5WEIqOCJuvkGqL:4k4nNGykkzbe0GJnQVLykw1mHh4Oew==
+config:
+  disk:image: debian-12-bookworm-v20240110
+  disk:sizeGb: "50"
+  disk:type: pd-ssd
+  gcp:project: dabble-palworld-server
+  gcp:zone: australia-southeast1-a
+  server:machineType: e2-standard-4
+  server:running: "true"

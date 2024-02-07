@@ -1,0 +1,15 @@
+{
+  "name": "palworld",
+  "main": "index.ts",
+  "scripts": {
+    "login": "pulumi login --local"
+  },
+  "devDependencies": {
+    "@types/node": "^16"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.1",
+    "@pulumi/gcp": "^6.64.0",
+    "@pulumi/pulumi": "^3.80.0"
+  }
+}
