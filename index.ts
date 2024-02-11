@@ -1,17 +1,13 @@
-import "dotenv/config";
 import * as pulumi from "@pulumi/pulumi";
 import * as gcp from "@pulumi/gcp";
 import { readFileSync } from "fs";
 
-const GCP_ORG_ID = process.env.GCP_ORG_ID;
-const GCP_BILLING_ACCOUNT = process.env.GCP_BILLING_ACCOUNT;
-
-if (!GCP_ORG_ID) {
-  throw new Error("GCP_ORG_ID is required");
-}
-if (!GCP_BILLING_ACCOUNT) {
-  throw new Error("GCP_BILLING_ACCOUNT is required");
-}
+import {
+  GCP_ORG_ID,
+  GCP_BILLING_ACCOUNT,
+  ADMIN_PASSWORD,
+  SERVER_PASSWORD,
+} from "./environment";
 
 const stack = pulumi.getStack();
 
@@ -64,6 +60,10 @@ new gcp.compute.Firewall(
         ports: ["8211"],
       },
       {
+        protocol: "tcp",
+        ports: ["8212"],
+      },
+      {
         protocol: "udp",
         ports: ["27015"],
       },
@@ -107,6 +107,15 @@ const staticIp = new gcp.compute.Address(
   }
 );
 
+const prometheusYml = readFileSync("palworld/prometheus.yml", "utf8");
+const grafanaDatasourceYml = readFileSync(
+  "palworld/grafana-datasource.yml",
+  "utf8"
+);
+const dockerComposeYml = readFileSync("palworld/docker-compose.yml", "utf8")
+  .replace(/#ADMIN_PASSWORD/g, ADMIN_PASSWORD)
+  .replace(/#SERVER_PASSWORD/g, SERVER_PASSWORD);
+
 const instanceConfig = new pulumi.Config("server");
 const instanceName = `${stack}-instance`;
 const instanceMachineType = instanceConfig.require("machineType");
@@ -137,16 +146,32 @@ const instance = new gcp.compute.Instance(
       },
     ],
     metadataStartupScript: pulumi.interpolate`#!/bin/bash
+# Add Docker's official GPG key:
 sudo apt-get update
-sudo apt-get install -y docker.io
+sudo apt-get install -y ca-certificates curl
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
 
-curl -sSO https://dl.google.com/cloudagents/add-google-cloud-ops-agent-repo.sh
-sudo bash add-google-cloud-ops-agent-repo.sh --also-install
+# Add the repository to Apt sources:
+echo \
+ "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian \
+ $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+ sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt-get update
+
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
 mkdir palworld
-sudo chmod -R a+rwx /palworld
-echo "${readFileSync(".env.palworld", "utf8")}" > /palworld/.env
-sudo docker run -d --name palworld-server -p 8211:8211/udp -p 27015:27015/udp -v /palworld:/palworld --env-file /palworld/.env --restart unless-stopped thijsvanloef/palworld-server-docker:latest
+sudo chmod -R a+rwx palworld
+
+cd palworld
+
+echo "${prometheusYml}" > prometheus.yml
+echo "${grafanaDatasourceYml}" > grafana-datasource.yml
+echo "${dockerComposeYml}" > docker-compose.yml
+
+docker compose up -d
 `,
   },
   {

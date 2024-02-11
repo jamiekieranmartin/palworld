@@ -1,0 +1,8 @@
+# /etc/prometheus/prometheus.yml
+scrape_configs:
+  - job_name: 'palworld'
+    static_configs:
+      - targets: ['palworld-exporter:9877']
+  - job_name: 'node'
+    static_configs:
+      - targets: ['node-exporter:9100']

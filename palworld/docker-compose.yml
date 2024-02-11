@@ -1,0 +1,67 @@
+services:
+  palworld-server:
+    image: thijsvanloef/palworld-server-docker:latest
+    restart: unless-stopped
+    container_name: palworld-server
+    stop_grace_period: 30s
+    ports:
+      - 8211:8211/udp
+      - 27015:27015/udp
+    environment:
+        - PUID=1000
+        - PGID=1000
+        - PORT=8211
+        - PLAYERS=32
+        - MULTITHREADING=true
+        - RCON_ENABLED=true
+        - RCON_PORT=25575
+        - TZ=UTC
+        - COMMUNITY=false
+        - ADMIN_PASSWORD=#ADMIN_PASSWORD
+        - SERVER_PASSWORD=#SERVER_PASSWORD
+    volumes:
+        - .:/palworld
+  palworld-exporter:
+    image: docker.io/bostrt/palworld-exporter:latest
+    restart: unless-stopped
+    container_name: palworld-exporter
+    ports:
+      - 9877:9877/tcp
+    depends_on:
+      - palworld-server
+    environment:
+      - RCON_HOST=palworld-server
+      - RCON_PORT=25575
+      - RCON_PASSWORD=#ADMIN_PASSWORD
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+    ports:
+      - 9090:9090
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - 8212:3000/tcp
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=#ADMIN_PASSWORD
+    volumes:
+      - ./grafana-datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml
+      - grafana-data:/var/lib/grafana
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    restart: unless-stopped
+    ports:
+      - "9100:9100"
+volumes:
+  prometheus-data: {}
+  grafana-data: {}
