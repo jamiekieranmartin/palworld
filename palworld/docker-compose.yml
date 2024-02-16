@@ -3,7 +3,7 @@ services:
     image: thijsvanloef/palworld-server-docker:latest
     restart: unless-stopped
     container_name: palworld-server
-    stop_grace_period: 30s
+    stop_grace_period: 90s
     ports:
       - 8211:8211/udp
       - 27015:27015/udp
@@ -19,6 +19,13 @@ services:
         - COMMUNITY=false
         - ADMIN_PASSWORD=#ADMIN_PASSWORD
         - SERVER_PASSWORD=#SERVER_PASSWORD
+        - BACKUP_ENABLED=true
+        - BACKUP_CRON_EXPRESSION=0 * * * *
+        - DELETE_OLD_BACKUPS=true
+        - OLD_BACKUP_DAYS=2
+        - PAL_EGG_DEFAULT_HATCHING_TIME=72.000000
+        - AUTO_REBOOT_ENABLED=true
+        - AUTO_REBOOT_CRON_EXPRESSION=30 */3 * * *
     volumes:
         - .:/palworld
   palworld-exporter:
@@ -61,7 +68,7 @@ services:
     container_name: node-exporter
     restart: unless-stopped
     ports:
-      - "9100:9100"
+      - 9100:9100
 volumes:
   prometheus-data: {}
   grafana-data: {}

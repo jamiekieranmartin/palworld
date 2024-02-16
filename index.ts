@@ -31,6 +31,9 @@ const computeService = new gcp.projects.Service(
   }
 );
 
+export const computeServiceId = computeService.id;
+export const computeServiceUrn = computeService.urn;
+
 const networkName = `${stack}-network`;
 const network = new gcp.compute.Network(
   networkName,
@@ -107,6 +110,65 @@ const staticIp = new gcp.compute.Address(
   }
 );
 
+// const startAndStopComputeInstancesRoleName = `${stack}-start-stop-compute-instances-role`;
+// const startAndStopComputeInstancesRole = new gcp.projects.IAMCustomRole(
+//   startAndStopComputeInstancesRoleName,
+//   {
+//     project: project.projectId,
+//     roleId: "startAndStopComputeInstances",
+//     title: "Start and Stop Compute Instances",
+//     permissions: [
+//       "compute.instances.start",
+//       "compute.instances.stop",
+//       "compute.instances.get",
+//     ],
+//   },
+//   {
+//     dependsOn: [computeService],
+//   }
+// );
+
+// const startAndStopComputeInstancesMemberName = `${stack}-start-stop-compute-instances-member`;
+// const startAndStopComputeInstancesMember = new gcp.projects.IAMBinding(
+//   startAndStopComputeInstancesMemberName,
+//   {
+//     project: project.projectId,
+//     role: startAndStopComputeInstancesRole.name,
+//     members: [
+//       project.number.apply(
+//         (number) =>
+//           `serviceAccount:service-${number}@compute-system.iam.gserviceaccount.com`
+//       ),
+//     ],
+//   },
+//   {
+//     dependsOn: [startAndStopComputeInstancesRole],
+//   }
+// );
+
+// const instanceSchedulePolicyName = `${stack}-instance-schedule-policy`;
+// const instanceSchedulePolicy = new gcp.compute.ResourcePolicy(
+//   instanceSchedulePolicyName,
+//   {
+//     name: instanceSchedulePolicyName,
+//     project: project.projectId,
+//     instanceSchedulePolicy: {
+//       vmStartSchedule: {
+//         // Start instances every week day at 04:00 PM.
+//         schedule: "0 16 * * 1-5",
+//       },
+//       vmStopSchedule: {
+//         // Stop instances every week day at 2:00 AM.
+//         schedule: "0 2 * * 1-5",
+//       },
+//       timeZone: "Australia/Brisbane",
+//     },
+//   },
+//   {
+//     dependsOn: [startAndStopComputeInstancesMember],
+//   }
+// );
+
 const prometheusYml = readFileSync("palworld/prometheus.yml", "utf8");
 const grafanaDatasourceYml = readFileSync(
   "palworld/grafana-datasource.yml",
@@ -133,7 +195,9 @@ const instance = new gcp.compute.Instance(
       source: disk.selfLink,
       deviceName,
     },
+    // resourcePolicies: instanceSchedulePolicy.selfLink,
     desiredStatus: instanceDesiredStatus,
+    allowStoppingForUpdate: true,
     networkInterfaces: [
       {
         network: network.id,
@@ -176,6 +240,7 @@ docker compose up -d
   },
   {
     dependsOn: [disk, staticIp, network],
+    // dependsOn: [disk, staticIp, network, instanceSchedulePolicy],
   }
 );
 

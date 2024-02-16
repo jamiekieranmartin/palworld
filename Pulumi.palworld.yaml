@@ -5,5 +5,5 @@ config:
   disk:type: pd-ssd
   gcp:project: dabble-palworld-server
   gcp:zone: australia-southeast1-a
-  server:machineType: e2-standard-4
+  server:machineType: e2-highmem-2
   server:running: "true"
