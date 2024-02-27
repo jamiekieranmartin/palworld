@@ -23,7 +23,8 @@ services:
         - BACKUP_CRON_EXPRESSION=0 * * * *
         - DELETE_OLD_BACKUPS=true
         - OLD_BACKUP_DAYS=2
-        - PAL_EGG_DEFAULT_HATCHING_TIME=72.000000
+        - PAL_EGG_DEFAULT_HATCHING_TIME=36.000000
+        - AUTO_UPDATE_ENABLED=true
         - AUTO_REBOOT_ENABLED=true
         - AUTO_REBOOT_CRON_EXPRESSION=30 */3 * * *
     volumes:
