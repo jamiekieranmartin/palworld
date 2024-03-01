@@ -70,6 +70,16 @@ services:
     restart: unless-stopped
     ports:
       - 9100:9100
+  save-repair:
+    image: ydkk/palworld-save-repair:latest
+    volumes:
+      - .:/palworld
+    environment:
+      - PLAYERS_SAVE_PATH=/palworld/Pal/Saved/SaveGames/0/9FF50CD38DE444D99CB12B28715F908F/Players
+    entrypoint: ""
+    # check and repair save data every 1 hour
+    command: ["/bin/sh", "-c", "while true; do sleep 3600; /app/pal_world_save_repair; done"]
+    restart: unless-stopped
 volumes:
   prometheus-data: {}
   grafana-data: {}
