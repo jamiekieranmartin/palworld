@@ -2,7 +2,7 @@
   "name": "palworld",
   "main": "index.ts",
   "scripts": {
-    "login": "pulumi login --local"
+    "pulumi:login": "pulumi login --local"
   },
   "devDependencies": {
     "@types/node": "^16",
